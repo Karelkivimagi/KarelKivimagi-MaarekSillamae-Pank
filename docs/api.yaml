@@ -1,0 +1,314 @@
+openapi: 3.0.2
+info:
+  title: MK-Pank
+  version: 1.0.0
+  description: Pank API
+  contact:
+    name: 'Maarek Sillamäe, Karel Kivimägi'
+servers:
+  -
+    url: 'http://localhost:3000'
+    description: ''
+paths:
+  /users:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/postUsersRequest'
+        required: true
+      tags:
+        - users
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/postUsersResponse'
+          description: User successfully registered
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                passwordRequired:
+                  value:
+                    error: 'Users validation failed: password: Path `password` is required.'
+                usernameRequired:
+                  value:
+                    error: 'Users validation failed: username: Path `username` is required.'
+                nameRequired:
+                  value:
+                    error: 'Users validation failed: name: Path `name` is required.'
+                duplicateUsername:
+                  value:
+                    error: >-
+                      E11000 duplicate key error collection: database.users index:
+                      username_1 dup key: { username: "aaa" }
+          description: Returns the errors specified
+      summary: Registers a new user
+  /users/account:
+    get:
+      tags:
+        - users
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/getUsersAccountResponse'
+          description: Successful data request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                userAccountNotFound:
+                  value:
+                    error: Account not found
+                invalidToken:
+                  value:
+                    error: Invalid token
+          description: Returns the errors specified
+      security:
+        -
+          Bearer: []
+      summary: Displays the users bank account details
+  /sessions:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/postSessionsRequest'
+        required: true
+      tags:
+        - sessions
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/postSessionsResponse'
+              examples:
+                tokenExample:
+                  value:
+                    token: 5f6dd64f5b5498060c54126a
+          description: User is logged in and provided a token
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                invalidUsernameOrPassword:
+                  value:
+                    error: Invalid username or password
+          description: Returns the errors specified
+      summary: Logs the user in
+    delete:
+      tags:
+        - sessions
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/successResponse'
+              examples:
+                tokenDeleted:
+                  value:
+                    message: Token successfully deleted
+          description: Session deleted successfully
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                missingToken:
+                  value:
+                    error: Missing token
+                invalidToken:
+                  value:
+                    error: Invalid token
+                unknownUser:
+                  value:
+                    error: Unknown user
+          description: Unauthorized
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                unsuccessfulDelete:
+                  value:
+                    error: Unsuccessful deletion
+          description: Server error
+      security:
+        -
+          Bearer: []
+      summary: Logs the user out
+  /transactions:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/postTransactionsRequest'
+        required: true
+      tags:
+        - transactions
+      responses:
+        '201':
+          description: Succesfully creates a transaction
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/errorResponse'
+              examples:
+                accountFromNotFound:
+                  value:
+                    error: Account not found
+                accountToNotFound:
+                  value:
+                    error: Invalid accountTo
+                invalidAmount:
+                  value:
+                    error: Invalid amount
+                insufficientFunds:
+                  value:
+                    error: Insufficient funds
+                invalidUserAccount:
+                  value:
+                    error: Forbidden
+          description: Returns the errors specified
+      security:
+        -
+          Bearer: []
+components:
+  schemas:
+    postUsersRequest:
+      title: Root Type for postUsersRequest
+      description: ''
+      type: object
+      properties:
+        name:
+          description: The name of the person registering their account
+          type: string
+        username:
+          description: User account username
+          type: string
+        password:
+          description: User account password
+          type: string
+      example:
+        name: karel
+        username: karelkivimagi
+        password: test123
+    errorResponse:
+      title: Root Type for errorResponse
+      description: Response body for all errors
+      type: object
+      properties:
+        error:
+          type: string
+      example:
+        error: Error description here
+    postUsersResponse:
+      title: Root Type for postUsersResponse
+      description: ''
+      type: object
+    postSessionsRequest:
+      title: Root Type for postSessionsRequest
+      description: ''
+      type: object
+      properties:
+        name:
+          description: The name of the person trying to log in
+          type: string
+        username:
+          description: User account username
+          type: string
+        password:
+          description: User account password
+          type: string
+      example:
+        name: karel
+        username: karelkivimagi
+        password: test123
+    postSessionsResponse:
+      title: Root Type for postSessionsResponse
+      description: ''
+      type: object
+      properties:
+        token:
+          description: The token provided and used on login to handle a specific user
+          type: string
+      example:
+        token: 5f6dd23b8818b63b2811afb4
+    successResponse:
+      title: Root Type for successResponse
+      description: ''
+      type: object
+      properties:
+        message:
+          type: string
+      example:
+        message: Message description here
+    getUsersAccountResponse:
+      title: Root Type for postUsersAccountResponse
+      description: ''
+      type: object
+      properties:
+        account:
+          description: Users account details
+          type: object
+          properties:
+            account_number:
+              type: string
+            balance:
+              type: string
+            user:
+              type: string
+      example:
+        name: karel
+        username: karelkivimagi
+        account:
+          -
+            account_number: EE9653242598521378
+            balance: 500
+            currency: EUR
+    postTransactionsRequest:
+      title: Root Type for postTransactionsRequest
+      description: ''
+      type: object
+      properties:
+        accountFrom:
+          description: Account number of the user sending funds
+          type: string
+        accountTo:
+          description: Account number of the user receiving funds
+          type: string
+        amount:
+          format: int32
+          description: The amount (funds)
+          type: integer
+        explanation:
+          description: The description of the transaction
+          type: string
+      example:
+        accountFrom: EE9653242598521378
+        accountTo: EE9653242598521377
+        amount: 50
+        explanation: test
+  securitySchemes:
+    Bearer:
+      scheme: bearer
+      type: http
+
